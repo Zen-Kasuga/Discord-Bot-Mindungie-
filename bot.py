@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import pandas as pd
 from tabulate import tabulate
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, root_mean_squared_error, r2_score
 
 load_dotenv()
 
@@ -39,7 +39,7 @@ async def Analyze(ctx, y_variable):
             await attachment.save(attachment.filename)
             file_path = attachment.filename
             dataFrame = pd.read_csv(file_path)
-
+            
             if y_variable in dataFrame.columns:
                 for col in dataFrame.columns:
                     if col != y_variable:
@@ -52,9 +52,17 @@ async def Analyze(ctx, y_variable):
                 prediction = regression.predict(x_values)
                 mae = mean_absolute_error(y_values, prediction)
                 mse = mean_squared_error(y_values, prediction)
+                rmse = root_mean_squared_error(y_values, prediction)
                 r2 = r2_score(y_values, prediction)
 
-                await ctx.send(f"```text\nData Contents:\n\n{dataFrame.to_markdown(index=False)}\n```")
+                coefficients = regression.coef_
+                intercept = regression.intercept_
+
+                dataFrame['Prediction'] = prediction
+
+                await ctx.send(f"```text\nRegression Results:\n\n{dataFrame.to_markdown(index=False)}\n```")
+                await ctx.send(f"```text\nCoefficients: {coefficients}\nIntercept: {intercept}\nMean Absolute Error (MAE): {mae}\nMean Squared Error (MSE): {mse}\nRoot Mean Squared Error (RMSE): {rmse}\nR-squared (R2): {r2}\n```")
+
             else:
                 await ctx.send(f"The column '{y_variable}' does not exist in the CSV file, {ctx.author}. You bitch!!")
 
