@@ -44,6 +44,8 @@ async def Analyze(ctx, y):
                     if col != y:
                         x_variable.append(col)
 
+                dataFrame[x_variable]
+
                 await ctx.send(f"```text\nData Contents:\n\n{dataFrame.to_markdown(index=False)}\n```")
             else:
                 await ctx.send(f"The column '{y}' does not exist in the CSV file, {ctx.author}. You bitch!!")
