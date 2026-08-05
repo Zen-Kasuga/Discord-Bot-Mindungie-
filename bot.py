@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import pandas as pd
 from tabulate import tabulate
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import mean_absolute_error, mean_squared_error, r2_score
 
 load_dotenv()
 
@@ -22,7 +23,7 @@ async def on_ready():
     print(f"Logged in as {bot.user}")
 
 @bot.command()
-async def Analyze(ctx, y):
+async def Analyze(ctx, y_variable):
     print(ctx.author)
     print(ctx.channel)
     print(ctx.guild)
@@ -39,16 +40,23 @@ async def Analyze(ctx, y):
             file_path = attachment.filename
             dataFrame = pd.read_csv(file_path)
 
-            if y in dataFrame.columns:
+            if y_variable in dataFrame.columns:
                 for col in dataFrame.columns:
-                    if col != y:
+                    if col != y_variable:
                         x_variable.append(col)
 
-                dataFrame[x_variable]
+                x_values = dataFrame[x_variable]
+                y_values = dataFrame[y_variable]
+
+                regression = LinearRegression().fit(x_values, y_values)
+                prediction = regression.predict(x_values)
+                mae = mean_absolute_error(y_values, prediction)
+                mse = mean_squared_error(y_values, prediction)
+                r2 = r2_score(y_values, prediction)
 
                 await ctx.send(f"```text\nData Contents:\n\n{dataFrame.to_markdown(index=False)}\n```")
             else:
-                await ctx.send(f"The column '{y}' does not exist in the CSV file, {ctx.author}. You bitch!!")
+                await ctx.send(f"The column '{y_variable}' does not exist in the CSV file, {ctx.author}. You bitch!!")
 
         else:
             await ctx.send(f"This is not a csv file, {ctx.author}. You dumb fuck!!")
