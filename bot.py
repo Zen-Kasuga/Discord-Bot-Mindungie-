@@ -7,6 +7,7 @@ import pandas as pd
 from tabulate import tabulate
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, root_mean_squared_error, r2_score
+import matplotlib.pyplot as plot
 
 load_dotenv()
 
@@ -60,9 +61,33 @@ async def Analyze(ctx, y_variable):
 
                 dataFrame['Prediction'] = prediction
 
+                charts = []
+
+                for col in x_variable:
+                    chart = plot.figure()
+                    plot.scatter(dataFrame[col], y_values, color='pink')
+
+                    chart_regression = LinearRegression().fit(x_values[[col]], y_values)
+
+                    sort = dataFrame.sort_values(by=col)
+
+                    chart_prediction = chart_regression.predict(sort[[col]])
+                    
+                    plot.plot(sort[col], chart_prediction, color='purple', linewidth=2)
+                    plot.legend()
+
+                    plot.title(f"Regression of {col} vs {y_variable}")
+                    plot.xlabel(col)
+                    plot.ylabel(y_variable)
+                    chart.savefig(f"{col}_vs_{y_variable}.png")
+                    charts.append(f"{col}_vs_{y_variable}.png")
+                    plot.close(chart)
+
                 await ctx.send(f"```text\nRegression Results:\n\n{dataFrame.to_markdown(index=False)}\n```")
                 await ctx.send(f"```text\nCoefficients: {coefficients}\nIntercept: {intercept}\nMean Absolute Error (MAE): {mae}\nMean Squared Error (MSE): {mse}\nRoot Mean Squared Error (RMSE): {rmse}\nR-squared (R2): {r2}\n```")
-
+                for chart_file in charts:
+                    await ctx.send(file=discord.File(chart_file))
+                    os.remove(chart_file)
             else:
                 await ctx.send(f"The column '{y_variable}' does not exist in the CSV file, {ctx.author}. You bitch!!")
 
