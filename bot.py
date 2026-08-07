@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 import os
-import random
 from dotenv import load_dotenv
 import pandas as pd
 from tabulate import tabulate
@@ -79,8 +78,10 @@ async def Analyze(ctx, y_variable):
                     plot.title(f"Regression of {col} vs {y_variable}")
                     plot.xlabel(col)
                     plot.ylabel(y_variable)
+
                     chart.savefig(f"{col}_vs_{y_variable}.png")
                     charts.append(f"{col}_vs_{y_variable}.png")
+
                     plot.close(chart)
 
                 await ctx.send(f"```text\nRegression Results:\n\n{dataFrame.to_markdown(index=False)}\n```")
@@ -91,6 +92,91 @@ async def Analyze(ctx, y_variable):
             else:
                 await ctx.send(f"The column '{y_variable}' does not exist in the CSV file, {ctx.author}. You bitch!!")
 
+        else:
+            await ctx.send(f"This is not a csv file, {ctx.author}. You dumb fuck!!")
+
+@bot.command()
+async def Bar(ctx, x_variable_bar, y_variable_bar): #ctx = context
+    print(ctx.author)
+    print(ctx.channel)
+    print(ctx.guild)
+
+    if not ctx.message.attachments:
+        await ctx.send(f"This is no attachment, {ctx.author}. You dumb fuck!!")
+        return
+
+    for attachment in ctx.message.attachments:
+        if attachment.filename.endswith(".csv"):
+            await attachment.save(attachment.filename)
+            file_path = attachment.filename
+            dataFrame = pd.read_csv(file_path)
+
+            if y_variable_bar in dataFrame.columns and x_variable_bar in dataFrame.columns:
+                x_values = dataFrame[x_variable_bar]
+                y_values = dataFrame[y_variable_bar]
+
+                fig, ax = plot.subplots()
+                ax.bar(x_values, y_values)
+
+                plot.title(f"Bar Chart of {y_variable_bar} vs {x_variable_bar}")
+                plot.xlabel(x_variable_bar)
+                plot.ylabel(y_variable_bar)
+
+                filename = "BarChart.png"
+
+                fig.savefig(filename)
+                await ctx.send(file=discord.File(filename))
+
+                plot.close(fig)
+                os.remove(filename)
+
+                return
+            else:
+                await ctx.send(f"The columns '{x_variable_bar}' or '{y_variable_bar}' do not exist in the CSV file. {ctx.author}, You bitch!!")
+                return
+    else:
+        await ctx.send(f"This is not a csv file, {ctx.author}. You dumb fuck!!")
+
+@bot.command()
+async def Pie(ctx): #ctx = context
+    print(ctx.author)
+    print(ctx.channel)
+    print(ctx.guild)
+
+    if not ctx.message.attachments:
+        await ctx.send(f"This is no attachment, {ctx.author}. You dumb fuck!!")
+        return
+
+    for attachment in ctx.message.attachments:
+        if attachment.filename.endswith(".csv"):
+            await attachment.save(attachment.filename)
+            file_path = attachment.filename
+            dataFrame = pd.read_csv(file_path)
+
+            if dataFrame.shape[1] < 2:
+                await ctx.send(f"The CSV file must have at least two columns for a pie chart. {ctx.author}, You bitch!!")
+                return
+
+            x_variable_pie = dataFrame.columns[0]
+            y_variable_pie = dataFrame.columns[1]
+
+            x_values = dataFrame[x_variable_pie]
+            y_values = dataFrame[y_variable_pie]
+            
+            fig, ax = plot.subplots()
+            ax.pie(y_values, labels=x_values, autopct='%1.1f%%')
+
+            plot.title(f"Pie Chart of {y_variable_pie} vs {x_variable_pie}")
+
+            filename = "PieChart.png"
+
+            fig.savefig(filename)
+            await ctx.send(file=discord.File(filename))
+
+            plot.close(fig)
+            os.remove(filename)
+
+            return
         else:
             await ctx.send(f"This is not a csv file, {ctx.author}. You dumb fuck!!")
 
@@ -107,10 +193,5 @@ async def yo(ctx): #ctx = context
     print(ctx.channel)
     print(ctx.guild)
     await ctx.send("Yahalloooooo")
-
-@bot.command()
-async def roll(ctx): #ctx = context
-    number = random.randint(1,1000)
-    await ctx.send(f"You rolled {number}")
 
 bot.run(TOKEN)
